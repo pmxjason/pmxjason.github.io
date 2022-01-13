@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<body>
+
+<div class="content">
+    <div id="media-div">
+    </div>
+  </div>
+  
+  <script>
+  const accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImN0eSI6InR3aWxpby1mcGE7dj0xIn0.eyJqdGkiOiJTS2Q5YmQyYTdiNDAwMmFiODY4MjE4Y2VhNTRkMmE0MDdlLTE2NDIwODkxMzkiLCJpc3MiOiJTS2Q5YmQyYTdiNDAwMmFiODY4MjE4Y2VhNTRkMmE0MDdlIiwic3ViIjoiQUMzMWYyZjZiNjgwOWJjZDhhMjEyZDZkMDAwNWQ1NDFkNyIsImV4cCI6MTY0MjA5MjczOSwiZ3JhbnRzIjp7ImlkZW50aXR5IjoiOWYyZWI5ZjEtYjk5ZS00OTM5LTlhM2EtY2Y0NWY0Y2ZmNzY0IiwidmlkZW8iOnsicm9vbSI6IjdiNThhM2M2LTcyMzEtNDhiYi05NmZjLTcyYWI5ODYxZjE0OCJ9fX0.xzviAoRyZqcBC4Yzl3QhbY-S6LltAyzeNSPtrF3_Ylk";
+  const roomGuid = "7b58a3c6-7231-48bb-96fc-72ab9861f148";
+  var muted = false;
+  var hideVideo = false;
+  var localParticipant;
+  var room;
+  
+  const muteButtonHTML = '<div title="Mute Microphone" id="mute" onclick="toggleSound();" style="box-sizing: border-box; flex-shrink: 0; width: 44px; height: 44px; display: flex; flex-direction: row; justify-content: center; align-items: center; overflow: visible; border-radius: 8px; border: 2px solid var(--token-d2ab5193-8c3d-4f8f-95e7-5546618c531c, #000000);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" color="rgb(0, 0, 0)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></div>';
+  const unMuteButtonHTML = '<div title="Unmute Microphone" id="mute" onclick="toggleSound();" style="box-sizing: border-box; flex-shrink: 0; width: 44px; height: 44px; display: flex; flex-direction: row; justify-content: center; align-items: center; overflow: visible; border-radius: 8px; border: 2px solid var(--token-082b5cec-72e7-4c46-aafb-86416a8c421d, #c8102e);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" color="rgb(200, 16, 46)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic-off"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></div>';
+  const hideVideoButtonHTML = '<div title="Turn Off Video" id="hideVideo" onclick="toggleVideo();" style="box-sizing: border-box; flex-shrink: 0; width: 44px; height: 44px; display: flex; flex-direction: row; justify-content: center; align-items: center;  overflow: visible; border-radius: 8px; border: 2px solid var(--token-d2ab5193-8c3d-4f8f-95e7-5546618c531c, #000000);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" color="rgb(0, 0, 0)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg></div>';
+  const showVideoButtonHTML = '<div title="Turn On Video" id="hideVideo" onclick="toggleVideo();" style="box-sizing: border-box; flex-shrink: 0; width: 44px; height: 44px; display: flex; flex-direction: row; justify-content: center; align-items: center;  overflow: visible; border-radius: 8px; border: 2px solid var(--token-082b5cec-72e7-4c46-aafb-86416a8c421d, #c8102e);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" color="rgb(200, 16, 46)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video-off"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg></div>';
+  const leaveButtonHTML = '<div title="Leave Call" id="exitButton" onclick="exitVideo();" style="box-sizing: border-box; flex-shrink: 0; width: 44px; height: 44px; display: flex; flex-direction: row; justify-content: center; align-items: center;  overflow: visible; border-radius: 8px; border: 2px solid var(--token-082b5cec-72e7-4c46-aafb-86416a8c421d, #000000);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></div>';
+  const countdownHTML = '<label id="minutes">00</label>:<label id="seconds">00</label>';
+  
+  function joinRoom () {
+      console.log("Joined Room");
+      Twilio.Video.createLocalTracks({
+          audio: true,
+          video: { width: 600 }
+      }).then(localTracks => {
+          console.log("Tracks Connected");
+          return Twilio.Video.connect(accessToken, {
+              name: roomGuid,
+              tracks: localTracks
+          });
+      }).then(room => {
+          room.participants.forEach(participantConnected, "no-controls");
+  
+          var previewContainer = document.getElementById(room.localParticipant.sid);
+  
+          if (!previewContainer || !previewContainer.querySelector("video")) {
+              participantConnected(room.localParticipant, "controls");
+          }
+  
+          room.on("participantConnected", participant => {
+            console.log("Participant Connected");
+              participantConnected(participant, "no-controls");
+          });
+          room.on("participantDisconnected", participant => {
+            console.log("Participant Disconnected");
+              participantDisconnected(participant, "no-controls");
+          });
+  
+          // record the Twilio Room SID in our DB
+          axios.post("&&API_URL&&/api/room/recordRoomSid/" + room.name + "/" + room.sid)
+              .then(response => {
+                  // nothing to do
+              })
+              .catch(error => console.error(error));
+  
+      });
+  }
+  
+  // ------------------------ //
+  
+  function participantConnected(participant, controls) {
+  
+      // Div for participant video feed //
+      const videoFeed = document.createElement("div");
+      videoFeed.id = participant.sid;
+      videoFeed.classList.add("videoFeed");
+  
+      // Create countdown timer display //
+      const countdown = document.createElement("div");
+      countdown.id = "countdown";
+      countdown.innerHTML = countdownHTML;
+      countdown.classList.add("countdown");
+  
+      // Create stack div to hold media buttons //
+      const stack = document.createElement("div");
+      stack.id = "stack";
+      stack.classList.add("stack");
+  
+      participant.tracks.forEach(publication => {
+  
+          if (publication.track) {
+              if (controls == "controls") {
+                  localParticipant = participant;
+  
+                  if (publication.track.kind == "audio") {
+                      // Ad mic button to stack div //                           
+                      const mic = document.createElement("div");
+                      mic.id = "mic";
+                      mic.innerHTML = muteButtonHTML;
+                      mic.classList.add("mic");
+                      stack.appendChild(mic);
+                  }
+  
+                  if (publication.track.kind == "video") {
+                      // add video button to stack div //
+                      const video = document.createElement("div");
+                      video.id = "video";
+                      video.innerHTML = hideVideoButtonHTML;
+                      video.classList.add("vid");
+                      stack.appendChild(video);
+                  }
+              }
+  
+              // Add leave button to stack div //
+              const leave = document.createElement("div");
+              leave.id = "leave";
+              leave.innerHTML = leaveButtonHTML;
+              leave.classList.add("leave");
+              stack.appendChild(leave);
+  
+              videoFeed.appendChild(publication.track.attach());
+          }
+      });
+  
+      participant.on("trackSubscribed", track => {
+          videoFeed.appendChild(track.attach());
+      });
+  
+      participant.on("trackUnsubscribed", removeTrack);
+  
+      // Add the stack and count down timer to the video feed div //
+      videoFeed.appendChild(stack);
+      videoFeed.appendChild(countdown);
+  
+      // Add the video feeds to the main media-div element //
+      document.getElementById("media-div").appendChild(videoFeed);
+  
+  }
+  
+  function participantDisconnected(participant) {
+      participant.tracks.forEach(removeTrack);
+      document.getElementById(participant.sid).remove();
+  }
+  
+  function removeTrack(track) {
+      track.detach().forEach(function(element) {
+          element.remove()
+      });
+  }
+  
+  function toggleSound (participantId) {
+      if (muted) {
+          localParticipant.audioTracks.forEach(publication => {
+              publication.track.enable();
+          });
+  
+          document.getElementById("mic").innerHTML = muteButtonHTML;
+          muted = false;
+      } else if (!muted) {
+          localParticipant.audioTracks.forEach(publication => {
+              publication.track.disable();
+          });
+  
+          document.getElementById("mic").innerHTML = unMuteButtonHTML;
+          muted = true;
+      }
+  }
+  
+  function exitVideo (){
+      var answer = window.confirm("Leave call and return to your appointments page?");
+      if (answer) {
+          displayCallEnded();
+      }
+  }
+  
+  function toggleVideo () {
+      if (hideVideo) {
+          localParticipant.videoTracks.forEach(publication => {
+              publication.track.enable();
+          });
+  
+          document.getElementById("video").innerHTML = hideVideoButtonHTML;
+          hideVideo = false;
+      } else if (!hideVideo) {
+          localParticipant.videoTracks.forEach(publication => {
+              publication.track.disable();
+          });
+  
+          document.getElementById("video").innerHTML = showVideoButtonHTML;
+          hideVideo = true;
+      }
+  }
+  
+  function loadTwilioSDK () {
+      twilioSDKEle = document.createElement("script");
+      twilioSDKEle.onload = function () { loadAxios(); };
+      twilioSDKEle.src = "https://sdk.twilio.com/js/video/releases/2.14.0/twilio-video.min.js";
+      document.body.appendChild(twilioSDKEle);
+  }
+  
+  function loadAxios () {
+      axiosEle = document.createElement("script");
+      axiosEle.onload = function () { joinRoom(); };
+      axiosEle.src = "https://unpkg.com/axios/dist/axios.min.js";
+      document.body.appendChild(axiosEle);
+  }
+  
+  loadTwilioSDK();
+  
+  // ------------------------ //
+  // Countdown timer function //
+  // ------------------------ //
+  
+  var totalSeconds = 300;
+  let myVar = setInterval(setTime, 1000);
+  
+  function setTime() {
+      --totalSeconds;
+      document.getElementById("seconds").innerHTML = pad(totalSeconds % 60);
+      document.getElementById("minutes").innerHTML = pad(parseInt(totalSeconds / 60));
+  
+      if(totalSeconds<61){
+          // Oh, noes. Running out of time
+          document.getElementById("countdown").style.background = "rgba(255, 128, 128, 0.7)";
+          document.getElementById("countdown").classList.add("flashSlow");
+  
+      }
+  
+      if(totalSeconds===0){
+          // TODO - When the timer reaches zero - kill the feed, redirect to appointments page for all
+          displayCallEnded();
+      }
+  }
+  
+  function pad(val) {
+      var valString = val + "";
+      if (valString.length < 2) {
+          return "0" + valString;
+      } else {
+          return valString;
+      }
+  }
+  
+  function displayCallEnded(){
+      // TODO - Kill the call with twilio?
+      clearInterval(myVar);
+      let element = document.getElementById("media-div");
+      while (element.firstChild) {
+          element.removeChild(element.firstChild);
+      }
+      element.innerHTML = "<center><p>Your appointment has finished.<br>If you need to arrange an additional meeting, contact our office.</p></center>";
+  }
+  </script>
+  </body>
