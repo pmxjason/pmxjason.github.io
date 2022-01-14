@@ -22,12 +22,12 @@
   const countdownHTML = '<label id="minutes">00</label>:<label id="seconds">00</label>';
   
   function joinRoom () {
-      console.log("Joined Room");
+      alert("Joined Room");
       Twilio.Video.createLocalTracks({
           audio: true,
           video: { width: 600 }
       }).then(localTracks => {
-          console.log("Tracks Connected");
+          alert("Tracks Connected");
           return Twilio.Video.connect(accessToken, {
               name: roomGuid,
               tracks: localTracks
@@ -42,11 +42,11 @@
           }
   
           room.on("participantConnected", participant => {
-            console.log("Participant Connected");
+            alert("Participant Connected");
               participantConnected(participant, "no-controls");
           });
           room.on("participantDisconnected", participant => {
-            console.log("Participant Disconnected");
+            alert("Participant Disconnected");
               participantDisconnected(participant, "no-controls");
           });
   
